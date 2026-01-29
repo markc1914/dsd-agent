@@ -6,6 +6,8 @@ Agent for populating Digital Solutioning Documents (DSD) with architecture data 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat&logo=python)
 ![Claude](https://img.shields.io/badge/AI-Claude-orange?style=flat)
 
+> **New to DSD Agent?** Check out the [Quick Start Guide](docs/QUICK_START.md) or the full [User Guide](docs/USER_GUIDE.md).
+
 ## Features
 
 - **Web GUI**: Modern Streamlit-based interface with drag-and-drop support
@@ -138,6 +140,9 @@ dsd-agent/
 │   ├── google_slides.py      # Google Slides support
 │   ├── image_analyzer.py     # Claude Vision integration
 │   └── integration_patterns.py  # Pattern recognition
+├── docs/
+│   ├── USER_GUIDE.md         # Comprehensive user guide
+│   └── QUICK_START.md        # 5-minute quick start
 ├── pyproject.toml
 ├── requirements.txt
 └── README.md
