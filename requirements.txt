@@ -3,6 +3,9 @@ anthropic>=0.39.0
 Pillow>=10.0.0
 streamlit>=1.28.0
 
+# Install the package itself
+.
+
 # Optional: Google Slides support
 # google-api-python-client>=2.100.0
 # google-auth-oauthlib>=1.1.0
