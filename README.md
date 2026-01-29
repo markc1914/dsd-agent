@@ -2,8 +2,13 @@
 
 Agent for populating Digital Solutioning Documents (DSD) with architecture data from photos, diagrams, and notes.
 
+![DSD Agent GUI](https://img.shields.io/badge/GUI-Streamlit-FF4B4B?style=flat&logo=streamlit)
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat&logo=python)
+![Claude](https://img.shields.io/badge/AI-Claude-orange?style=flat)
+
 ## Features
 
+- **Web GUI**: Modern Streamlit-based interface with drag-and-drop support
 - **PowerPoint Support**: Read and update `.pptx` files with Lorem Ipsum placeholders
 - **Google Slides Support**: Connect to Google Slides presentations via API
 - **Multi-source Input**:
@@ -16,7 +21,7 @@ Agent for populating Digital Solutioning Documents (DSD) with architecture data 
   - Event: Event-Driven, Event Sourcing, CQRS
   - Microservices: Saga, Circuit Breaker, Strangler Fig
   - Data: Data Lake, Data Warehouse, CDC, ETL
-- **Interactive Mode**: Guided workflow for first-time users
+- **Interactive CLI Mode**: Guided workflow for terminal users
 - **Smart Mapping**: AI-powered mapping of components to slide placeholders based on position and context
 
 ## Installation
@@ -25,14 +30,39 @@ Agent for populating Digital Solutioning Documents (DSD) with architecture data 
 pip install -e .
 ```
 
+For GUI support:
+```bash
+pip install -e ".[gui]"
+```
+
 For Google Slides support:
 ```bash
 pip install -e ".[google]"
 ```
 
+For everything:
+```bash
+pip install -e ".[all]"
+```
+
 ## Usage
 
-### Interactive Mode (Recommended)
+### Web GUI (Recommended)
+
+```bash
+streamlit run dsd_agent/gui.py
+```
+
+Then open http://localhost:8501 in your browser.
+
+**GUI Features:**
+- Drag-and-drop file upload
+- Visual component extraction preview
+- Interactive slide selection
+- Live mapping preview
+- One-click download of populated document
+
+### CLI Interactive Mode
 
 ```bash
 dsd-agent --interactive
@@ -102,7 +132,8 @@ dsd-agent/
 │   ├── __init__.py
 │   ├── agent.py              # Main agent logic
 │   ├── cli.py                # Command-line interface
-│   ├── interactive.py        # Interactive mode
+│   ├── gui.py                # Streamlit web GUI
+│   ├── interactive.py        # CLI interactive mode
 │   ├── pptx_handler.py       # PowerPoint handling
 │   ├── google_slides.py      # Google Slides support
 │   ├── image_analyzer.py     # Claude Vision integration
