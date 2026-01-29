@@ -1,11 +1,18 @@
 """Image analyzer using Claude's vision capabilities."""
 
 import base64
+import io
 import json
 from pathlib import Path
 from dataclasses import dataclass
 
 import anthropic
+from PIL import Image
+
+
+# Anthropic's maximum image size is 5MB (5,242,880 bytes)
+# We use a slightly smaller target to account for base64 encoding overhead
+MAX_IMAGE_BYTES = 4_500_000  # ~4.5MB to leave room for base64 overhead
 
 
 @dataclass
@@ -26,23 +33,86 @@ class ArchitectureAnalysis:
     source_type: str  # "whiteboard", "diagram", "mermaid", "notes"
 
 
+def compress_image(image_path: Path, max_bytes: int = MAX_IMAGE_BYTES) -> tuple[bytes, str]:
+    """Compress an image to fit within size limits while preserving quality.
+
+    Returns tuple of (image_bytes, media_type).
+    """
+    img = Image.open(image_path)
+
+    # Convert RGBA to RGB if necessary (for JPEG compatibility)
+    if img.mode in ('RGBA', 'LA', 'P'):
+        # Create white background
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    # Start with high quality JPEG
+    quality = 95
+
+    # Progressively reduce quality and/or size until under limit
+    while True:
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=quality, optimize=True)
+        size = buffer.tell()
+
+        if size <= max_bytes:
+            buffer.seek(0)
+            return buffer.read(), "image/jpeg"
+
+        # Try reducing quality first
+        if quality > 30:
+            quality -= 10
+            continue
+
+        # If quality is already low, reduce dimensions
+        width, height = img.size
+        new_width = int(width * 0.8)
+        new_height = int(height * 0.8)
+
+        if new_width < 100 or new_height < 100:
+            # Can't reduce further, return what we have
+            buffer.seek(0)
+            return buffer.read(), "image/jpeg"
+
+        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        quality = 85  # Reset quality for resized image
+
+
 def encode_image(image_path: str | Path) -> tuple[str, str]:
-    """Encode an image to base64 and determine media type."""
+    """Encode an image to base64 and determine media type.
+
+    Automatically compresses large images to fit within API limits.
+    """
     path = Path(image_path)
-    suffix = path.suffix.lower()
 
-    media_types = {
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".png": "image/png",
-        ".gif": "image/gif",
-        ".webp": "image/webp",
-    }
+    # Check file size first
+    file_size = path.stat().st_size
 
-    media_type = media_types.get(suffix, "image/png")
+    if file_size <= MAX_IMAGE_BYTES:
+        # File is small enough, use original
+        suffix = path.suffix.lower()
+        media_types = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+        }
+        media_type = media_types.get(suffix, "image/png")
 
-    with open(path, "rb") as f:
-        data = base64.standard_b64encode(f.read()).decode("utf-8")
+        with open(path, "rb") as f:
+            data = base64.standard_b64encode(f.read()).decode("utf-8")
+
+        return data, media_type
+
+    # File is too large, compress it
+    image_bytes, media_type = compress_image(path)
+    data = base64.standard_b64encode(image_bytes).decode("utf-8")
 
     return data, media_type
 
